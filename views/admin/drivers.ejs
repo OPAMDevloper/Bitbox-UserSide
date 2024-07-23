@@ -11,12 +11,12 @@
         <% drivers.forEach(driver => { %>
             <li>
                 <%= driver.name %> - <%= driver.serial %> - <%= driver.model %>
-                <form action="http://localhost:5001/admin/drivers/delete/<%= driver._id %>" method="POST">
+                <form action="https://bitbox-userside.onrender.com/admin/drivers/delete/<%= driver._id %>" method="POST">
                     <button type="submit">Delete</button>
                 </form>
             </li>
         <% }); %>
     </ul>
-    <a href="http://localhost:5001/admin/dashboard">Back to Dashboard</a>
+    <a href="https://bitbox-userside.onrender.com/admin/dashboard">Back to Dashboard</a>
 </body>
 </html>
