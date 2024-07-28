@@ -171,6 +171,10 @@
         margin-top: 30%;
     }
 }
+#certificate-link
+{
+    display: none;
+}
     </style>
 </head>
 <body>
@@ -185,11 +189,15 @@
 
     <div class="container" >
         <form action="/check-warranty2" method="GET" style="width: 120%;margin-left: 25%;">
-            <input type="text" class="input-field" name="serial" id="serial" pattern="[A-Za-z0-9]{10}" placeholder="Enter your Serial Number without any Special Character" required>
-            <button type="submit" class="search-button" style="width: 30%;margin-left: 25%;">
-                Check Your Warranty
-                <span class="search-icon">🔍</span>
-            </button>
+            <input type="text" class="input-field" name="serial" 
+            id="serialInput"
+       pattern="[A-Za-z0-9]{10}" 
+       placeholder="Enter your Serial Number without any Special Character" 
+       value="<%= typeof serialNumber !== 'undefined' ? serialNumber : '' %>" required>
+<button type="submit" class="search-button" style="width: 30%; margin-left: 25%;">
+    Check Your Warranty
+    <span class="search-icon">🔍</span>
+</button>
         </form>
         <br>
         <!-- Example for displaying result, needs to be implemented in server-side code -->
@@ -236,9 +244,9 @@
             <h2>Download Warranty Certificate</h2>
             <input type="text" id="serialInput" placeholder="Enter Serial Number">
             <button class="send-otp-button" onclick="sendOTP()">Send OTP</button>
-            <input type="text" id="otp2" placeholder="Enter OTP" style="display: none;">
+            <input type="text" id="otp2" placeholder="Enter OTP" >
             <button class="verify-otp-button" onclick="verifyOtp()" style="display: none;">Verify OTP</button>
-            <div id="certificate-link" style="display: none;">
+            <div id="certificate-link" >
                 <h3>Certificate Link: <a href="#" id="cert-link" target="_blank">Download Certificate</a></h3>
             </div>
         </div>
@@ -260,35 +268,47 @@
         }
 
         async function sendOTP() {
-            var serial = document.getElementById("serialInput").value;
-            if (serial) {
-                const response = await fetch(`/send-otp?serial=${serial}`);
-                if (response.ok) {
-                    document.getElementById("otp2").style.display = "block";
-                    document.getElementsByClassName("verify-otp-button")[0].style.display = "block";
-                } else {
-                    alert("Failed to send OTP");
-                }
-            } else {
-                alert("Please enter the serial number");
-            }
+    var serial = document.getElementById("serialInput").value; // Change to use the existing serial input
+    if (serial) {
+        const response = await fetch(`/send-otp/${serial}`, {
+            method: 'POST'
+        });
+        if (response.ok) {
+            alert("OTP Sent");
+            document.getElementById("otp").style.display = "block";
+            document.getElementsByClassName("verify-otp-button")[0].style.display = "block";
+        } else {
+            alert("Failed to send OTP");
         }
+    } else {
+        alert("Please enter the serial number");
+    }
+}
+async function verifyOtp() {
+    var serial = document.getElementById("serialInput").value; // Ensure this ID matches the input element
+    var otp = document.getElementById("otp").value || document.getElementById("otp2").value;
+    console.log(otp);
+    if (serial && otp) {
+        const response = await fetch('/verify-otp', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ serial, otp }),
+        });
 
-        async function verifyOtp() {
-            var serial = document.getElementById("serialInput").value;
-            var otp = document.getElementById("otp2").value;
-            if (serial && otp) {
-                const response = await fetch(`/verify-otp?serial=${serial}&otp=${otp}`);
-                if (response.ok) {
-                    document.getElementById("cert-link").href = `/download-certificate?serial=${serial}`;
-                    document.getElementById("certificate-link").style.display = "block";
-                } else {
-                    alert("Invalid OTP");
-                }
-            } else {
-                alert("Please enter the OTP");
-            }
+        if (response.ok) {
+            const data = await response.json();
+            document.getElementById("cert-link").href = `/download-certificate?serial=${serial}`;
+            document.getElementById("certificate-link").style.display = "block";
+        } else {
+            alert("Invalid OTP");
         }
+    } else {
+        alert("Please enter the OTP");
+    }
+}
+   
     </script>
 </body>
 </html>

@@ -1517,8 +1517,8 @@ app.get('/admin/drivers', isAuthenticated, async (req, res) => {
 
 const generateOTP = () => {return Math.floor(100000 + Math.random() * 900000).toString();};
 //Send OTP
-app.post('/send-otp', async (req, res) => {
-    const { serial } = req.body;
+app.post('/send-otp/:serial', async (req, res) => {
+    const serial = req.params.serial;
     if (!serial) {
         return res.status(400).json({ message: 'Serial number is required' });
     }
@@ -1536,9 +1536,9 @@ app.post('/send-otp', async (req, res) => {
         }
 
         const warranty = await Warranty.findOne({ serialNumber: serial });
-        const email = warranty.email; 
+        const email = warranty.email;
+
         try {
-            // Send email using nodemailer transporter
             const info = await transporter.sendMail({
                 from: '"Bitbox Alerts" <alerts@bitboxpc.com>',
                 to: email,
@@ -1551,29 +1551,21 @@ app.post('/send-otp', async (req, res) => {
                         <br>
                         *Enter the OTP on the certificate download page to proceed. 
                         <br><br>
-
                         Thank you for your cooperation in maintaining the security of your data. If you have any questions or need assistance, please don't hesitate to contact our support team at support@bitboxpc.com.   
-   
                         Best Regards,<br>
                         Team Bitbox
                         <br><br>
                         Toll Free: 1800309PATA <br>
                         E-mail: <a href="">support@bitboxpc.com </a> <br>
-                        web: <a href=" www.bitboxpc.com"> www.bitboxpc.com </a> <br><br>
+                        web: <a href="www.bitboxpc.com"> www.bitboxpc.com </a> <br><br>
                         <img src='https://www.bitboxpc.com/wp-content/uploads/2024/04/BitBox_logo1.png' height="60" width="140"></img>`
-               
             });
-    
-           
-            
         } catch (error) {
             console.error('Error sending notification email:', error);
             res.status(500).send('Error sending notification email');
         }
-        
-        const maskedEmail = maskEmail(email);
-        // Here you can implement sending the OTP to the user via email or SMS
 
+        const maskedEmail = maskEmail(email);
         res.json({ message: 'OTP sent successfully', otp, maskedEmail });
     } catch (error) {
         console.error(error);
@@ -1600,13 +1592,13 @@ app.post('/verify-otp', async (req, res) => {
             return res.status(404).json({ message: 'Invalid OTP or Serial Number' });
         }
 
-         
         res.json({ message: 'OTP verified successfully', certificateLink: certificate.certificateLink });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Internal server error' });
     }
 });
+
 
 //reseller feth
 app.get('/resellers', async (req, res) => {
