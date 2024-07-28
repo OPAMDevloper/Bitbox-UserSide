@@ -419,7 +419,7 @@ app.post('/update-serial', async (req, res) => {
 });
 
 app.post('/add-serial', upload.single('file'), async (req, res) => {
-    const { serialNumber, modelNumber, testedBy, processor, motherboard, ram, ssd, hdd, monitorSize } = req.body;
+    const { serialNumber, modelNumber, testedBy, processor, motherboard, ram, ssd, hdd, monitorSize, operatingSystem, keyboardMouseCombo } = req.body;
     const file = req.file.filename;
 
     try {
@@ -442,7 +442,9 @@ app.post('/add-serial', upload.single('file'), async (req, res) => {
             ram,
             ssd,
             hdd,
-            monitorSize
+            monitorSize,
+            operatingSystem,
+            keyboardMouseCombo
         });
 
         await newSerial.save();
@@ -452,6 +454,7 @@ app.post('/add-serial', upload.single('file'), async (req, res) => {
         res.status(500).send('Error adding serial number');
     }
 });
+
 
 
 

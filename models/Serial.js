@@ -10,7 +10,9 @@ const serialNumberSchema = new mongoose.Schema({
     ram: { type: String, required: true },
     ssd: { type: String, required: true },
     hdd: { type: String, required: true },
-    monitorSize: { type: String, required: true }
+    monitorSize: { type: String, required: true },
+    operatingSystem: { type: String, required: true }, // New field
+    keyboardMouseCombo: { type: String, required: true } // New field
 });
 
 const SerialNumber = mongoose.model('SerialNumber', serialNumberSchema);
