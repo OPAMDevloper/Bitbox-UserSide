@@ -107,11 +107,19 @@ app.post('/submit-warranty-claim', async (req, res) => {
         const { certificateId, phoneNumber, emailId, serialNumber, message } = req.body;
 
         // Check if the certificate exists
-        const exists = await Certificate.exists({ serialNumber });
-        console.log(exists);
+        const certificateExists = await Certificate.exists({ serialNumber });
+        console.log(certificateExists);
 
-        if (!exists) {
+        if (!certificateExists) {
             return res.status(400).send({ message: 'Serial Number does not exist' });
+        }
+
+        // Check if there is an unresolved warranty claim for the serial number
+        const unresolvedClaimExists = await WarrantyClaim.exists({ serialNumber, status: { $ne: 'Resolved' } });
+        console.log(unresolvedClaimExists);
+
+        if (unresolvedClaimExists) {
+            return res.status(400).send({ message: 'A warranty claim has already been submitted and is currently unresolved' });
         }
 
         // Create and save the warranty claim
@@ -120,7 +128,8 @@ app.post('/submit-warranty-claim', async (req, res) => {
             phoneNumber,
             emailId,
             serialNumber,
-            message
+            message,
+            status: 'Pending' // Set initial status to 'Pending'
         });
 
         await warrantyClaim.save();
@@ -167,6 +176,7 @@ web: <a href="http://www.bitboxpc.com">www.bitboxpc.com</a></p>`
         res.status(500).send({ message: 'Error submitting warranty claim', error });
     }
 });
+
 
 
 app.get('/warrantyClaim/status/:certificateId', async (req, res) => {
