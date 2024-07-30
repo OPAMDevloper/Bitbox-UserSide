@@ -221,19 +221,19 @@
 
         <div class="buttons-container">
             <div class="button-item">
-                <a href="https://bitbox-userside.onrender.com/register-warranty" class="green-button">Register Warranty</a>
+                <a href="http://localhost:5000/register-warranty" style="background-color: orange;" class="green-button">Register Warranty</a>
                 <p>If you know Serial Number & Model - You may register your warranty here</p>
             </div>
             <div class="button-item">
-                <a href="https://bitbox-userside.onrender.com/check-device" class="green-button">Check Your Device Info</a>
+                <a href="http://localhost:5000/check-device" style="background-color: orange;" class="green-button">Check Your Device Info</a>
                 <p>To know your device Serial Number, Model Number, Warranty Info click here</p>
             </div>
             <div class="button-item">
-                <button class="green-button" onclick="openModal()">Download Your Warranty Certificate</button>
+                <button class="green-button" style="background-color: orange;" onclick="openModal()">Download Your Warranty Certificate</button>
                 <p>Check your Warranty</p>
             </div>
             <div class="button-item">
-                <a href="https://bitbox-userside.onrender.com/claim-warranty" class="green-button">Claim Your Warranty</a>
+                <a href="http://localhost:5000/claim-warranty" style="background-color: orange;" class="green-button">Claim Your Warranty</a>
             </div>
         </div>
     </div>
@@ -289,26 +289,37 @@ async function verifyOtp() {
     var otp = document.getElementById("otp").value || document.getElementById("otp2").value;
     console.log(otp);
     if (serial && otp) {
-        const response = await fetch('/verify-otp', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ serial, otp }),
-        });
+        try {
+            const response = await fetch('/verify-otp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ serial, otp }),
+            });
 
-        if (response.ok) {
-            const data = await response.json();
-            document.getElementById("cert-link").href = `/download-certificate?serial=${serial}`;
-            document.getElementById("certificate-link").style.display = "block";
-        } else {
-            alert("Invalid OTP");
+            if (response.ok) {
+                const data = await response.json();
+                // Access the certificateLink from the response data
+                const certificateLink = data.certificateLink;
+                if (certificateLink) {
+                    document.getElementById("cert-link").href = certificateLink;
+                    document.getElementById("certificate-link").style.display = "block";
+                } else {
+                    alert("Certificate link not found");
+                }
+            } else {
+                alert("Invalid OTP");
+            }
+        } catch (error) {
+            console.error('Error verifying OTP:', error);
+            alert("An error occurred while verifying OTP");
         }
     } else {
         alert("Please enter the OTP");
     }
 }
-   
+
     </script>
 </body>
 </html>

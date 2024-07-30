@@ -136,11 +136,13 @@
                 phoneNumber: document.getElementById('phoneNumber').value,
                 emailId: document.getElementById('emailId').value,
                 serialNumber: document.getElementById('serialNumber').value,
+                message: document.getElementById('query').value,
                 status: 'submitted'
             };
+            console.log(formData);
 
             try {
-                const response = await fetch('https://bitbox-userside.onrender.com/claim-warranty', {
+                const response = await fetch('http://localhost:5000/submit-warranty-claim', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -162,7 +164,7 @@
             const certificateId = document.getElementById('checkCertificateId').value;
 
             try {
-                const response = await fetch(`https://bitbox-userside.onrender.com/warrantyClaim/status/${certificateId}`, {
+                const response = await fetch(`http://localhost:5000/warrantyClaim/status/${certificateId}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'

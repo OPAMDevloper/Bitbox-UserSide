@@ -102,59 +102,72 @@ app.get('/claim-warranty', async (req, res) => {
     }
 });
 
-app.post('/claim-warranty', async (req, res) => {
+app.post('/submit-warranty-claim', async (req, res) => {
     try {
-        const { certificateId, phoneNumber, emailId, serialNumber,query } = req.body;
+        const { certificateId, phoneNumber, emailId, serialNumber, message } = req.body;
+
+        // Check if the certificate exists
+        const exists = await Certificate.exists({ serialNumber });
+        console.log(exists);
+
+        if (!exists) {
+            return res.status(400).send({ message: 'Serial Number does not exist' });
+        }
+
+        // Create and save the warranty claim
         const warrantyClaim = new WarrantyClaim({
             certificateId,
             phoneNumber,
             emailId,
             serialNumber,
-            message:query,
-            status: 'submitted'
+            message
         });
-
-        const exists = await Certificate.exists(serialNumber);
-
-        if(!exists)
-        {
-            res.status(500).send({ message: 'Serail Number not exist', error });
-        }
-
-
 
         await warrantyClaim.save();
 
+        // Send email
         async function sendMail() {
-            const info = await transporter.sendMail({
-                from: '"Bitbox Alerts" <alerts@bitboxpc.com>',
-                to: `"Recipient" <${emailId}>`,
-                subject: "Warranty Claim Submitted",
-                text: `Dear Bitbox PC User,
-                `,
-                html: `<b>Dear Bitbox PC User, <br>Your Warranty Claim for Serail Number ${serialNumber} With Refrence To Certificate ID ${certificateId} <br> Submitted Sucessfully, We'll Convey You Further Updates on Your Mail</b></br>
+            try {
+                const info = await transporter.sendMail({
+                    from: '"Bitbox Alerts" <alerts@bitboxpc.com>',
+                    to: `"Recipient" <${emailId}>`,
+                    subject: "Warranty Claim Submitted",
+                    text: `Dear Bitbox PC User,
 
-                <br><br>If you have any questions about your warranty coverage or need further assistance, please feel free to contact our customer support team at support@bitboxpc.com<br><br>
-                Regards,<br>
-                Team Bitbox
-                <br><br>
-                Toll Free: 1800309PATA <br>
-                eMail: <a href="mailto:support@bitboxpc.com">support@bitboxpc.com</a> <br>
-                web: <a href="http://www.bitboxpc.com">www.bitboxpc.com</a> <br><br>
-                <img src='https://www.bitboxpc.com/wp-content/uploads/2024/04/BitBox_logo1.png' height="60" width="140">`,
-                
-            });
+Your Warranty Claim for Serial Number ${serialNumber} with Reference to Certificate ID ${certificateId} has been submitted successfully. We'll convey further updates to your email.
 
+If you have any questions about your warranty coverage or need further assistance, please feel free to contact our customer support team at support@bitboxpc.com.
 
+Regards,
+Team Bitbox
+Toll Free: 1800309PATA
+eMail: support@bitboxpc.com
+web: www.bitboxpc.com`,
+                    html: `<p>Dear Bitbox PC User,</p>
+<p>Your Warranty Claim for Serial Number <strong>${serialNumber}</strong> with Reference to Certificate ID <strong>${certificateId}</strong> has been submitted successfully. We'll convey further updates to your email.</p>
+<p>If you have any questions about your warranty coverage or need further assistance, please feel free to contact our customer support team at <a href="mailto:support@bitboxpc.com">support@bitboxpc.com</a>.</p>
+<p>Regards,<br>
+Team Bitbox<br>
+Toll Free: 1800309PATA<br>
+eMail: <a href="mailto:support@bitboxpc.com">support@bitboxpc.com</a><br>
+web: <a href="http://www.bitboxpc.com">www.bitboxpc.com</a></p>`
+                });
+                console.log('Email sent: ' + info.response);
+            } catch (mailError) {
+                console.error('Error sending email:', mailError);
+                throw mailError; // Re-throw to be caught in the outer catch block
+            }
         }
+
         await sendMail();
-
-
         res.status(201).send({ message: 'Warranty claim submitted successfully' });
+
     } catch (error) {
+        console.error('Error submitting warranty claim:', error);
         res.status(500).send({ message: 'Error submitting warranty claim', error });
     }
 });
+
 
 app.get('/warrantyClaim/status/:certificateId', async (req, res) => {
     try {
@@ -586,7 +599,7 @@ app.post('/bulk-verify-warranty', upload.single('billPdf'), async (req, res) => 
         };
 
         if (duplicateWarranties.length > 0) {
-            res.status(201).send(`This Device ${response.duplicate.join(', ')} is already registered, please connect with our customer care at support@yourdomain.com`);
+            res.status(201).send(`This Device ${response.duplicate.join(', ')} is already registered, please connect with our customer care at  support@bitboxpc.com`);
         }
 
         await Warranty.insertMany(newWarranties);

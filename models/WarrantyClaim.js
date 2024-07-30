@@ -5,7 +5,7 @@ const warrantyClaimSchema = new mongoose.Schema({
     phoneNumber: { type: String, required: true },
     emailId: { type: String, required: true },
     serialNumber: { type: String, required: true },
-    message:{type:String, required: true },
+    message:{type:String, required: false },
     status: { type: String, default: 'submitted' }
 });
 
