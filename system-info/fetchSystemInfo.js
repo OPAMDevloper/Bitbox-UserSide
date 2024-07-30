@@ -23,10 +23,10 @@ async function fetchSystemInfo() {
          
 
         // Send system information to the server
-        await axios.post('http://localhost:5000/system-info', systemInfo);
+        await axios.post('https://bitbox-userside.onrender.com/system-info', systemInfo);
 
         // Open a URL in the default web browser with the random number as a query parameter
-        openWebsite(`http://localhost:5000/temp?randomNumber=${randomNumber}`);
+        openWebsite(`https://bitbox-userside.onrender.com/temp?randomNumber=${randomNumber}`);
     } catch (error) {
         console.error('Error fetching or sending system information:', error);
     }

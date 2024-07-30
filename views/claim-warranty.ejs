@@ -142,7 +142,7 @@
             console.log(formData);
 
             try {
-                const response = await fetch('http://localhost:5000/submit-warranty-claim', {
+                const response = await fetch('https://bitbox-userside.onrender.com/submit-warranty-claim', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -164,7 +164,7 @@
             const certificateId = document.getElementById('checkCertificateId').value;
 
             try {
-                const response = await fetch(`http://localhost:5000/warrantyClaim/status/${certificateId}`, {
+                const response = await fetch(`https://bitbox-userside.onrender.com/warrantyClaim/status/${certificateId}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
