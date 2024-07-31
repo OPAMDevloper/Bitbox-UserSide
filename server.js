@@ -108,7 +108,7 @@ app.post('/submit-warranty-claim', async (req, res) => {
         const { certificateId, phoneNumber, emailId, serialNumber, message } = req.body;
 
         // Check if the certificate exists
-        const certificateExists = await Certificate.exists({ serialNumber });
+        const certificateExists = await Warranty.exists({ serialNumber });
         console.log(certificateExists);
 
         if (!certificateExists) {
