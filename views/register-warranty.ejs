@@ -181,7 +181,7 @@
                 <input type="text" id="state" name="state" required><br><br>
 
                 <label for="phoneNumber">Phone Number:</label>
-                <input type="text" id="phoneNumber" name="phoneNumber" required><br><br>
+                <input type="text" id="phoneNumber" name="phoneNumber" value="+91" required><br><br>
 
                 <label for="billPdf">Upload Bill PDF:</label>
                 <input type="file" id="billPdf" name="billPdf" accept="application/pdf" required><br><br>
@@ -276,81 +276,63 @@
             }
     
             function togglePurchaseMedium() {
-                const purchaseMedium = document.querySelector('input[name="purchaseMedium"]:checked').value;
-                const purchaseDetailsDiv = document.getElementById('purchaseDetails');
-                purchaseDetailsDiv.innerHTML = '';
-    
-                if (purchaseMedium === 'direct') {
-                    const companyLabel = document.createElement('label');
-                    companyLabel.textContent = 'Company:';
-                    const companyInput = document.createElement('input');
-                    companyInput.type = 'text';
-                    companyInput.name = 'company';
-                    companyInput.value = 'PATA ELECTRIC COMPANY';
-                    companyInput.readOnly = true;
-    
-                    purchaseDetailsDiv.appendChild(companyLabel);
-                    purchaseDetailsDiv.appendChild(companyInput);
-                } else if (purchaseMedium === 'reseller') {
-                    const resellerLabel = document.createElement('label');
-                    resellerLabel.textContent = 'Select Reseller:';
-                    const resellerSelect = document.createElement('select');
-                    resellerSelect.name = 'reseller';
-    
-                    // Fetch reseller options from the server
-                    fetch('https://bitbox-userside.onrender.com/resellers')
-                        .then(response => response.json())
-                        .then(data => {
-                            data.resellers.forEach(reseller => {
-                                const option = document.createElement('option');
-                                option.value = reseller.name;
-                                option.textContent = reseller.name;
-                                resellerSelect.appendChild(option);
-                            });
-                        })
-                        .catch(error => console.error('Error fetching resellers:', error));
-    
-                    purchaseDetailsDiv.appendChild(resellerLabel);
-                    purchaseDetailsDiv.appendChild(resellerSelect);
-                }
-            }
-    
+    const purchaseMedium = document.querySelector('input[name="purchaseMedium"]:checked').value;
+    const purchaseDetailsDiv = document.getElementById('purchaseDetails');
+    purchaseDetailsDiv.innerHTML = '';
+
+    if (purchaseMedium === 'direct') {
+        const companyLabel = document.createElement('label');
+        companyLabel.textContent = 'Company:';
+        const companyInput = document.createElement('input');
+        companyInput.type = 'text';
+        companyInput.name = 'company';
+        companyInput.value = 'PATA ELECTRIC COMPANY';
+        companyInput.readOnly = true;
+
+        purchaseDetailsDiv.appendChild(companyLabel);
+        purchaseDetailsDiv.appendChild(companyInput);
+    } else if (purchaseMedium === 'reseller') {
+        const resellerLabel = document.createElement('label');
+        resellerLabel.textContent = 'Select Reseller:';
+        const resellerSelect = document.createElement('select');
+        resellerSelect.name = 'reseller';
+
+        // Fetch reseller options from the server
+        fetch('/resellers')
+            .then(response => response.json())
+            .then(data => {
+                data.resellers.forEach(reseller => {
+                    const option = document.createElement('option');
+                    option.value = reseller.companyName;
+                    option.textContent = reseller.companyName;
+                    resellerSelect.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error fetching resellers:', error));
+
+        purchaseDetailsDiv.appendChild(resellerLabel);
+        purchaseDetailsDiv.appendChild(resellerSelect);
+    }
+}
+
             function toggleWarrantyOptions() {
     const warrantyType = document.querySelector('input[name="warrantyType"]:checked').value;
     const warrantyOptionSelect = document.getElementById('warrantyOptionSelect');
     const selectedWarrantyOption = document.getElementById('selectedWarrantyOption');
 
     warrantyOptionSelect.innerHTML = '';
-    
-    if (warrantyType === 'on-site') {
-        const options = [
-            { value: '8x5 On-site next day response', label: '8x5 On-site next day response' },
-            { value: 'On-site 72 hours Issue resolution', label: 'On-site 72 hours Issue resolution' },
-            { value: '4 Hours / 24x7 On-site Support', label: '4 Hours / 24x7 On-site Support' }
-        ];
 
-        options.forEach(option => {
-            const optionElement = document.createElement('option');
-            optionElement.value = option.value;
-            optionElement.textContent = option.label;
-            warrantyOptionSelect.appendChild(optionElement);
-        });
-    } else if (warrantyType === 'off-site') {
-        const options = [
-            { value: 'Off-Site 72 Hours Resolution', label: 'Off-Site 72 Hours Resolution' },
-            { value: 'Off-site', label: 'Off-site' }
-        ];
-
-        options.forEach(option => {
-            const optionElement = document.createElement('option');
-            optionElement.value = option.value;
-            optionElement.textContent = option.label;
-            warrantyOptionSelect.appendChild(optionElement);
-        });
-    }
-
-    // Update the hidden input field with the selected option
-    selectedWarrantyOption.value = warrantyOptionSelect.value;
+    fetch('/warranty-options')
+        .then(response => response.json())
+        .then(options => {
+            options.filter(option => option.type === warrantyType).forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option.value;
+                optionElement.textContent = option.label;
+                warrantyOptionSelect.appendChild(optionElement);
+            });
+        })
+        .catch(error => console.error('Error fetching warranty options:', error));
 
     document.getElementById('warrantyOptions').style.display = 'block';
 }

@@ -242,15 +242,16 @@
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2>Download Warranty Certificate</h2>
-            <input type="text" id="serialInput" placeholder="Enter Serial Number">
-            <button class="send-otp-button" onclick="sendOTP()">Send OTP</button>
-            <input type="text" id="otp2" placeholder="Enter OTP" >
-            <button class="verify-otp-button" onclick="verifyOtp()" style="display: none;">Verify OTP</button>
-            <div id="certificate-link" >
-                <h3>Certificate Link: <a href="#" id="cert-link" target="_blank">Download Certificate</a></h3>
+            <input type="text" id="serialInputModal" placeholder="Enter Serial Number">
+            <button class="send-otp-button" onclick="sendOTPModal()">Send OTP</button>
+            <input type="text" id="otpModal" placeholder="Enter OTP" style="display: none;">
+            <button class="verify-otp-button" onclick="verifyOtpModal()" style="display: none;">Verify OTP</button>
+            <div id="certificate-link2" style="display: none;">
+                <h3>Certificate Link: <a href="#" id="cert-link2" target="_blank">Download Certificate</a></h3>
             </div>
         </div>
     </div>
+    
 
     <script>
         function openModal() {
@@ -272,17 +273,21 @@
     if (serial) {
         const response = await fetch(`/send-otp/${serial}`, {
             method: 'POST'
-        });
-        if (response.ok) {
-            alert("OTP Sent");
-            document.getElementById("otp").style.display = "block";
-            document.getElementsByClassName("verify-otp-button")[0].style.display = "block";
-        } else {
-            alert("Failed to send OTP");
+        })
+        .then(response => response.json())
+            .then(response => {
+                if (response.message === 'OTP sent successfully') {
+                    alert("OTP Sent to " + response.maskedEmail);
+                    document.getElementById("otp").style.display = "block";
+                } else {
+                    alert("Failed to send OTP");
+                }
+            })
+            .catch(error => {
+                console.error('Error sending OTP:', error);
+                alert("Error sending OTP");
+            });
         }
-    } else {
-        alert("Please enter the serial number");
-    }
 }
 async function verifyOtp() {
     var serial = document.getElementById("serialInput").value; // Ensure this ID matches the input element
@@ -320,6 +325,64 @@ async function verifyOtp() {
     }
 }
 
+
+async function sendOTPModal() {
+    var serial = document.getElementById("serialInputModal").value;
+    if (serial) {
+        try {
+            const response = await fetch(`/send-otp/${serial}`, {
+                method: 'POST'
+            });
+            const data = await response.json();
+            if (data.message === 'OTP sent successfully') {
+                alert("OTP Sent to " + data.maskedEmail);
+                document.getElementById("otpModal").style.display = "block";
+                document.querySelector(".verify-otp-button").style.display = "block";
+            } else {
+                alert("Failed to send OTP");
+            }
+        } catch (error) {
+            console.error('Error sending OTP:', error);
+            alert("Error sending OTP");
+        }
+    }
+}
+
+// Verify OTP for modal
+async function verifyOtpModal() {
+    var serial = document.getElementById("serialInputModal").value;
+    var otp = document.getElementById("otpModal").value;
+
+    if (serial && otp) {
+        try {
+            const response = await fetch('/verify-otp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ serial, otp }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const certificateLink = data.certificateLink;
+                if (certificateLink) {
+                    document.getElementById("cert-link2").href = certificateLink;
+                    document.getElementById("certificate-link2").style.display = "block";
+                } else {
+                    alert("Certificate link not found");
+                }
+            } else {
+                alert("Invalid OTP");
+            }
+        } catch (error) {
+            console.error('Error verifying OTP:', error);
+            alert("An error occurred while verifying OTP");
+        }
+    } else {
+        alert("Please enter the OTP");
+    }
+}
     </script>
 </body>
 </html>

@@ -14,6 +14,7 @@ const SystemInfo = require('./models/SystemInfo');
 const Certificate = require('./models/Certificate'); 
 const Reseller = require('./models/Reseller'); 
 const WarrantyClaim = require('./models/WarrantyClaim');
+const WarrantyOption = require('./models/WarrantyOption');
 const os = require('os');
 const app = express();
 const port = 5000;
@@ -177,6 +178,14 @@ web: <a href="http://www.bitboxpc.com">www.bitboxpc.com</a></p>`
     }
 });
 
+app.get('/warranty-options', async (req, res) => {
+    try {
+        const warrantyOptions = await WarrantyOption.find();
+        res.json(warrantyOptions);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
 
 
 app.get('/warrantyClaim/status/:certificateId', async (req, res) => {
@@ -557,16 +566,15 @@ function isAuthenticated(req, res, next) {
 
 //Register Bulk  Warrenty
 app.post('/bulk-verify-warranty', upload.single('billPdf'), async (req, res) => {
-    const { numComputers, expiryyear, name, email, purchaseDate, address, city, pincode, state, phoneNumber, purchaseMedium, company, reseller, warrantyType,selectedWarrantyOption } = req.body;
+    const { numComputers, expiryyear, name, email, purchaseDate, address, city, pincode, state, phoneNumber, purchaseMedium, company, reseller, warrantyType, selectedWarrantyOption } = req.body;
     const warranties = [];
     const expiryDate = expiryyear;
     const billPdfPath = req.file.path;
     console.log(selectedWarrantyOption);
 
-    if (numComputers == 1) {
-        var constant = null;
-    } else {
-        var constant = Math.floor(10000000 + Math.random() * 90000000);
+    let constant = null;
+    if (numComputers > 1) {
+        constant = Math.floor(10000000 + Math.random() * 90000000);
     }
 
     const purchaseDetails = purchaseMedium === 'direct' ? company : reseller;
@@ -590,7 +598,7 @@ app.post('/bulk-verify-warranty', upload.single('billPdf'), async (req, res) => 
             billPdf: billPdfPath,
             batch: constant,
             purchaseDetails,
-            warrantyType:selectedWarrantyOption // Adding the new field to the warranty object
+            warrantyType: selectedWarrantyOption // Adding the new field to the warranty object
         });
     }
 
@@ -609,49 +617,66 @@ app.post('/bulk-verify-warranty', upload.single('billPdf'), async (req, res) => 
         };
 
         if (duplicateWarranties.length > 0) {
-            res.status(201).send(`This Device ${response.duplicate.join(', ')} is already registered, please connect with our customer care at  support@bitboxpc.com`);
+            res.status(201).send(`This Device ${response.duplicate.join(', ')} is already registered, please connect with our customer care at support@bitboxpc.com`);
         }
 
         await Warranty.insertMany(newWarranties);
-        
+
         // Send email with PDF attachment
-        async function sendMail() {
+        async function sendMail(to, subject, text, html) {
             const info = await transporter.sendMail({
                 from: '"Bitbox Alerts" <alerts@bitboxpc.com>',
-                to: `"Recipient" <${email}>`,
-                subject: "Warranty Registration Submitted and Pending for Verification ",
-                text: `Dear Bitbox PC User,
-                Your warranty registration has been successfully completed. We will verify the details and notify you as soon as possible.
-                
-                Regards,
-                Team Support
-                BitBox`,
-                html: `Dear Customer, <br>
-                <b>Thank you for submitting your warranty registration form. We have successfully received your details and will now proceed with verification. Rest assured, our team will carefully review your submission. <br>
-                We appreciate your patience during this process. You will receive an update from us shortly regarding the status of your warranty registration. <br>
-                If you have any urgent inquiries or require further assistance, please feel free to reach out to our customer support team at support@bitboxpc.com  </b>
-                <br><br>
-                Best Regards,<br>
-                Team Bitbox
-                <br><br>
-                Toll Free: 1800309PATA <br>
-                eMail: <a href="">support@bitboxpc.com </a> <br>
-                web: <a href=" www.bitboxpc.com"> www.bitboxpc.com </a> <br><br>
-                <img src='https://www.bitboxpc.com/wp-content/uploads/2024/04/BitBox_logo1.png' height="60" width="140"></img>`,
-                
+                to,
+                subject,
+                text,
+                html,
             });
 
             console.log('Message sent: %s', info.messageId);
         }
-        await sendMail();
 
+        await sendMail(
+            `"Recipient" <${email}>`,
+            "Warranty Registration Submitted and Pending for Verification",
+            `Dear Bitbox PC User,
+            Your warranty registration has been successfully completed. We will verify the details and notify you as soon as possible.
+            
+            Regards,
+            Team Support
+            BitBox`,
+            `Dear Customer, <br>
+            <b>Thank you for submitting your warranty registration form. We have successfully received your details and will now proceed with verification. Rest assured, our team will carefully review your submission. <br>
+            We appreciate your patience during this process. You will receive an update from us shortly regarding the status of your warranty registration. <br>
+            If you have any urgent inquiries or require further assistance, please feel free to reach out to our customer support team at support@bitboxpc.com  </b>
+            <br><br>
+            Best Regards,<br>
+            Team Bitbox
+            <br><br>
+            Toll Free: 1800309PATA <br>
+            eMail: <a href="">support@bitboxpc.com </a> <br>
+            web: <a href=" www.bitboxpc.com"> www.bitboxpc.com </a> <br><br>
+            <img src='https://www.bitboxpc.com/wp-content/uploads/2024/04/BitBox_logo1.png' height="60" width="140"></img>`
+        );
 
-        res.status(201).send('Warranty Request Submitted Sucessfully');
+        let alertMessage = `New warranty registration request received with the following serial numbers: ${response.success.join(', ')}`;
+        if (constant) {
+            alertMessage += `\nBatch ID: ${constant}`;
+        }
+
+        await sendMail(
+            '"Alerts" <alerts@bitboxpc.com>',
+            "New Warranty Registration Request",
+            alertMessage,
+            alertMessage.replace(/\n/g, '<br>')
+        );
+
+        res.status(201).send('Warranty Request Submitted Successfully');
     } catch (error) {
         console.error('Error SUBMITTING warranties:', error);
         res.status(500).send('Error verifying warranties');
     }
 });
+
 
 //Verify Warrenty
 app.post('/verify-warranty', async (req, res) => {
