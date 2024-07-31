@@ -130,7 +130,7 @@ app.post('/submit-warranty-claim', async (req, res) => {
             emailId,
             serialNumber,
             message,
-            status: 'Pending' // Set initial status to 'Pending'
+            status: 'Submitted' // Set initial status to 'Pending'
         });
 
         await warrantyClaim.save();
